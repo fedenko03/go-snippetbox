@@ -22,7 +22,7 @@ func main() {
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
-	// DATABASE CONNECTION open <<<<<
+	// DATABASE CONNECTION
 	DBS := "postgres://postgres:1234567@localhost:5432/snippetbox"
 	pool, error := pgx.Connect(context.Background(), DBS)
 	if error != nil {
