@@ -5,15 +5,17 @@ import (
 	"context"
 	"flag"
 	"github.com/jackc/pgx/v5"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
 )
 
 type application struct {
-	errorLog *log.Logger
-	infoLog  *log.Logger
-	snippets *models.SnippetModel
+	errorLog      *log.Logger
+	infoLog       *log.Logger
+	snippets      *models.SnippetModel
+	templateCache map[string]*template.Template
 }
 
 func main() {
@@ -30,6 +32,11 @@ func main() {
 	}
 	defer pool.Close(context.Background())
 
+	templateCache, errr := newTemplateCache()
+	if errr != nil {
+		errorLog.Fatal(errr)
+	}
+
 	// testing
 	//var title string
 	//var content string
@@ -42,9 +49,10 @@ func main() {
 	//fmt.Println(title)
 
 	app := &application{
-		errorLog: errorLog,
-		infoLog:  infoLog,
-		snippets: &models.SnippetModel{DB: pool},
+		errorLog:      errorLog,
+		infoLog:       infoLog,
+		snippets:      &models.SnippetModel{DB: pool},
+		templateCache: templateCache,
 	}
 
 	srv := &http.Server{
