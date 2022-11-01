@@ -3,6 +3,7 @@ package main
 import (
 	"com.snippetbox.aitu/internal/models"
 	"context"
+	"crypto/tls"
 	"flag"
 	"github.com/alexedwards/scs/pgxstore"
 	"github.com/alexedwards/scs/v2"
@@ -51,6 +52,7 @@ func main() {
 	sessionManager = scs.New()
 	sessionManager.Store = pgxstore.New(pool)
 	sessionManager.Lifetime = 12 * time.Hour
+	sessionManager.Cookie.Secure = true
 
 	app := &application{
 		errorLog:       errorLog,
@@ -61,12 +63,20 @@ func main() {
 		sessionManager: sessionManager,
 	}
 
+	tlsConfig := &tls.Config{
+		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
+	}
+
 	srv := &http.Server{
-		Addr:     *addr,
-		ErrorLog: errorLog,
-		Handler:  app.routes(),
+		Addr:         *addr,
+		ErrorLog:     errorLog,
+		Handler:      app.routes(),
+		TLSConfig:    tlsConfig,
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 	infoLog.Printf("Starting server on %s", *addr)
-	err := srv.ListenAndServe()
+	err := srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	errorLog.Fatal(err)
 }
